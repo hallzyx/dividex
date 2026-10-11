@@ -53,13 +53,42 @@ button, input { font: inherit; }
 }
 
 .site-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 16px;
-  align-items: flex-start;
+  align-items: start;
   margin-bottom: 28px;
 }
 
-.mark { width: 52px; height: 52px; flex: none; }
+.mark { width: 52px; height: 52px; }
+
+.lang-switch {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+
+.lang-btn {
+  min-width: 44px;
+  padding: 8px 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.lang-btn[aria-pressed="true"] {
+  color: #fffdf9;
+  background: var(--ink);
+}
 
 .eyebrow {
   margin: 0 0 6px;

@@ -170,6 +170,25 @@ assertEqual(zeroTip.cents, 0, 'zero tip cents');
 var negativeTip = DC.parseAmountToCents('-2', { allowZero: true, kind: 'tip' });
 assertEqual(negativeTip.message, 'La propina no puede ser negativa.', 'negative tip message');
 
+var esKeys = Object.keys(DC.STRINGS.es).sort();
+var enKeys = Object.keys(DC.STRINGS.en).sort();
+assertEqual(esKeys, enKeys, 'every translation key exists in both languages');
+esKeys.forEach(function (key) {
+  assert(typeof DC.STRINGS.es[key] === 'string' && DC.STRINGS.es[key].trim() !== '', 'Spanish string for ' + key);
+  assert(typeof DC.STRINGS.en[key] === 'string' && DC.STRINGS.en[key].trim() !== '', 'English string for ' + key);
+});
+assertEqual(DC.STRINGS.en.waTitle, 'Table bill 🍽️', 'English WhatsApp title');
+assertEqual(DC.STRINGS.es.waTitle, 'Cuenta de la mesa 🍽️', 'Spanish WhatsApp title');
+assertEqual(DC.STRINGS.en.copied, 'Copied!', 'English copied label');
+assertEqual(DC.STRINGS.es.copied, '¡Copiado!', 'Spanish copied label');
+assertEqual(
+  DC.buildWhatsAppMessage(tenPercent, 'en'),
+  'Table bill 🍽️\nAna: S/ 11.00\nLuis: S/ 11.00\nMaría: S/ 11.00\nTotal: S/ 33.00',
+  'English WhatsApp message keeps soles amounts'
+);
+assertEqual(DC.messageFor('price', 'empty', 'en'), 'Enter a price.', 'English empty price message');
+assertEqual(DC.messageFor('price', 'empty', 'es'), 'Escribe un precio.', 'Spanish empty price message stays in the table');
+
 console.log('');
 console.log(passed + ' passed, ' + failed + ' failed');
 if (failed > 0) process.exit(1);

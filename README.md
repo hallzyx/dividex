@@ -4,7 +4,7 @@ Divide la cuenta
 
 A small static page to split a restaurant bill in Peruvian soles (S/). Built for the MLH Global Hack Week beginner challenge. Open `index.html` in a browser, or use the GitHub Pages site. There is no build step and no server.
 
-![Desktop: three people, a 10% tip, and the table total](docs/screenshots/desktop.png)
+![Desktop in English: three people, a 10% tip, and the table total](docs/screenshots/desktop.png)
 
 ![Mobile width of the same bill](docs/screenshots/mobile.png)
 
@@ -17,9 +17,10 @@ A small static page to split a restaurant bill in Peruvian soles (S/). Built for
 - Add people and the dishes or drinks they ordered, with a price. Edit or delete people and items.
 - Choose a tip: 0%, 10%, 15%, or a custom amount in soles. The tip is split in proportion to what each person consumed.
 - See each person's subtotal, tip share, and total, plus the table total. Money is handled in integer cents. Leftover cents use the largest-remainder method (ties keep the list order), so the per-person totals add up to the table total exactly.
-- Copy a WhatsApp message. The button confirms with "¡Copiado!". If the Clipboard API is unavailable, it falls back to a manual copy.
+- Copy a WhatsApp message. The button confirms with "¡Copiado!" or "Copied!". If the Clipboard API is unavailable, it falls back to a manual copy.
+- Switch every label, button, placeholder, validation message, table header, and the WhatsApp text with the **ES / EN** control in the header. The page opens in the browser language (English when that language does not start with `es`) and remembers the choice in this browser.
 
-Amounts are shown as `S/ 12.50`. The interface is in Spanish (Peru).
+Amounts are shown as `S/ 12.50` in both languages.
 
 ## How to use
 
@@ -29,7 +30,7 @@ Amounts are shown as `S/ 12.50`. The interface is in Spanish (Peru).
 4. Pick the tip.
 5. Press **Copiar para WhatsApp** and paste the message in the chat.
 
-Empty names are rejected. Empty, zero, and negative prices are rejected and are not added. Each error is explained in Spanish.
+Empty names are rejected. Empty, zero, and negative prices are rejected and are not added. Each error is explained in the selected language.
 
 Scripts are classic (not ES modules), so the page works from `file://` as well as from GitHub Pages.
 
@@ -62,9 +63,10 @@ Página estática para dividir la cuenta de un restaurante en soles (S/). Sirve 
 - Agrega personas y los platos o bebidas que pidieron, con precio. Puedes editar y eliminar personas y pedidos.
 - Elige la propina: 0%, 10%, 15% o un monto en soles. La propina se reparte según lo que consumió cada persona.
 - Muestra el subtotal, la parte de la propina y el total de cada persona, además del total de la mesa. El cálculo usa céntimos enteros y reparte los céntimos sobrantes (mayor resto; si hay empate, gana quien aparece primero) para que la suma cuadre exacto.
-- Copia un mensaje para WhatsApp. El botón muestra "¡Copiado!". Si el navegador no deja usar el portapapeles, queda un mensaje para copiarlo a mano.
+- Copia un mensaje para WhatsApp. El botón muestra "¡Copiado!" o "Copied!". Si el navegador no deja usar el portapapeles, queda un mensaje para copiarlo a mano.
+- El control **ES / EN** del encabezado cambia etiquetas, botones, marcadores de posición, avisos, encabezados de la tabla y el texto de WhatsApp. Al abrir, usa el idioma del navegador (inglés si no empieza por `es`) y guarda la elección en este navegador.
 
-Los montos se ven así: `S/ 12.50`.
+Los montos se ven así en los dos idiomas: `S/ 12.50`.
 
 ### Cómo usarla
 
@@ -74,7 +76,7 @@ Los montos se ven así: `S/ 12.50`.
 4. Elige la propina.
 5. Pulsa **Copiar para WhatsApp** y pega el mensaje en el chat.
 
-Un nombre vacío no se acepta. Un precio vacío, cero o negativo no se agrega y muestra un aviso en español.
+Un nombre vacío no se acepta. Un precio vacío, cero o negativo no se agrega y muestra un aviso en el idioma elegido.
 
 ### Pruebas
 

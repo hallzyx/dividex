@@ -1,7 +1,24 @@
 <!DOCTYPE html>
-<html lang="es-PE">
+<html lang="es">
 <head>
   <meta charset="utf-8">
+  <script>
+    (function () {
+      var lang = 'en';
+      try {
+        var stored = localStorage.getItem('dividex-lang');
+        if (stored === 'es' || stored === 'en') {
+          document.documentElement.lang = stored;
+          return;
+        }
+      } catch (err) {}
+      var browser = '';
+      if (navigator.languages && navigator.languages.length) browser = navigator.languages[0];
+      else browser = navigator.language || '';
+      if (String(browser).toLowerCase().indexOf('es') === 0) lang = 'es';
+      document.documentElement.lang = lang;
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4efe6">
   <meta name="description" content="Dividex. Divide la cuenta de la mesa en soles: platos, propina proporcional y un mensaje listo para WhatsApp.">
@@ -20,73 +37,77 @@
         <path d="M13 16h22M13 24h14M13 32h18" stroke="#f6f1e8" stroke-width="2.2" stroke-linecap="round"/>
         <circle cx="34" cy="32" r="3" fill="#e36a3d"/>
       </svg>
-      <div>
-        <p class="eyebrow">Divide la cuenta</p>
+      <div class="site-intro">
+        <p class="eyebrow" data-i18n="eyebrow">Divide la cuenta</p>
         <h1>Dividex</h1>
-        <p class="lede">Anota lo que pidió cada persona, elige la propina y copia el resumen para WhatsApp.</p>
+        <p class="lede" data-i18n="lede">Anota lo que pidió cada persona, elige la propina y copia el resumen para WhatsApp.</p>
+      </div>
+      <div id="lang-switch" class="lang-switch" role="group" data-i18n-aria="langGroup" aria-label="Idioma">
+        <button type="button" class="lang-btn" data-lang="es" aria-pressed="true" aria-label="Español">ES</button>
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="false" aria-label="English">EN</button>
       </div>
     </header>
 
     <main class="layout">
       <section class="panel" aria-labelledby="people-heading">
-        <h2 id="people-heading">Personas</h2>
+        <h2 id="people-heading" data-i18n="peopleHeading">Personas</h2>
         <form id="add-person-form" class="add-person" novalidate>
-          <label for="person-name">Nombre</label>
+          <label for="person-name" data-i18n="nameLabel">Nombre</label>
           <div class="row">
-            <input id="person-name" name="name" maxlength="60" placeholder="Ana" autocomplete="off">
-            <button type="submit" class="btn btn-primary">Agregar persona</button>
+            <input id="person-name" name="name" maxlength="60" placeholder="Ana" data-i18n-placeholder="namePlaceholder" autocomplete="off">
+            <button type="submit" class="btn btn-primary" data-i18n="addPerson">Agregar persona</button>
           </div>
           <p id="person-error" class="field-error" role="alert"></p>
         </form>
 
         <div id="empty-state" class="empty">
-          <h3>La mesa está vacía</h3>
-          <p>Agrega a cada persona y anota sus platos o bebidas. La cuenta se actualiza al instante.</p>
+          <h3 data-i18n="emptyTitle">La mesa está vacía</h3>
+          <p data-i18n="emptyBody">Agrega a cada persona y anota sus platos o bebidas. La cuenta se actualiza al instante.</p>
         </div>
         <div id="people"></div>
       </section>
 
       <aside class="panel summary" aria-labelledby="bill-heading">
         <div class="receipt-top">
-          <span class="receipt-kicker">Cuenta</span>
+          <span class="receipt-kicker" data-i18n="receiptKicker">Cuenta</span>
           <span id="receipt-meta">Propina 10%</span>
         </div>
-        <h2 id="bill-heading">La cuenta</h2>
-        <p class="tip-help">La propina se reparte según lo que consumió cada persona.</p>
+        <h2 id="bill-heading" data-i18n="billHeading">La cuenta</h2>
+        <p class="tip-help" data-i18n="tipHelp">La propina se reparte según lo que consumió cada persona.</p>
 
-        <div class="tip-options" role="group" aria-label="Propina">
+        <div class="tip-options" role="group" data-i18n-aria="tipGroup" aria-label="Propina">
           <button type="button" data-tip="0" aria-pressed="false">0%</button>
           <button type="button" data-tip="10" aria-pressed="true">10%</button>
           <button type="button" data-tip="15" aria-pressed="false">15%</button>
-          <button type="button" data-tip="custom" aria-pressed="false">Otro</button>
+          <button type="button" data-tip="custom" data-i18n="tipCustomButton" aria-pressed="false">Otro</button>
         </div>
 
         <div id="custom-tip-wrap" hidden>
-          <label for="custom-tip">Monto de la propina (S/)</label>
-          <input id="custom-tip" inputmode="decimal" maxlength="12" placeholder="10.00" autocomplete="off">
+          <label for="custom-tip" data-i18n="customTipLabel">Monto de la propina (S/)</label>
+          <input id="custom-tip" inputmode="decimal" maxlength="12" placeholder="10.00" data-i18n-placeholder="customTipPlaceholder" autocomplete="off">
           <p id="custom-tip-error" class="field-error" role="alert"></p>
         </div>
 
         <p class="grand">
-          <span>Total de la mesa</span>
+          <span data-i18n="grandLabel">Total de la mesa</span>
           <strong id="grand-total" data-total-cents="0">S/ 0.00</strong>
         </p>
 
         <div class="table-wrap">
           <table>
-            <caption class="sr-only">Reparto de la cuenta por persona</caption>
+            <caption class="sr-only" data-i18n="tableCaption">Reparto de la cuenta por persona</caption>
             <thead>
               <tr>
-                <th scope="col">Persona</th>
-                <th scope="col">Subtotal</th>
-                <th scope="col">Propina</th>
-                <th scope="col">Total</th>
+                <th scope="col" data-i18n="colPerson">Persona</th>
+                <th scope="col" data-i18n="colSubtotal">Subtotal</th>
+                <th scope="col" data-i18n="colTip">Propina</th>
+                <th scope="col" data-i18n="colTotal">Total</th>
               </tr>
             </thead>
             <tbody id="bill-body"></tbody>
             <tfoot>
               <tr>
-                <th scope="row">Total</th>
+                <th scope="row" data-i18n="footTotal">Total</th>
                 <td id="sum-subtotal">S/ 0.00</td>
                 <td id="sum-tip">S/ 0.00</td>
                 <td id="sum-total" data-total-cents="0">S/ 0.00</td>
@@ -94,22 +115,23 @@
             </tfoot>
           </table>
         </div>
-        <p class="adjust-note">Los céntimos se ajustan para que la suma de las personas cuadre exacto con el total.</p>
+        <p class="adjust-note" data-i18n="adjustNote">Los céntimos se ajustan para que la suma de las personas cuadre exacto con el total.</p>
 
-        <p class="wa-label">Mensaje para WhatsApp</p>
+        <p class="wa-label" data-i18n="waLabel">Mensaje para WhatsApp</p>
         <pre id="wa-preview" class="wa-preview">Agrega personas para armar el mensaje.</pre>
-        <button type="button" id="copy-btn" class="copy-btn" disabled>Copiar para WhatsApp</button>
+        <button type="button" id="copy-btn" class="copy-btn" data-i18n="copyButton" disabled>Copiar para WhatsApp</button>
         <p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
-        <p id="copy-fallback" hidden>No se pudo copiar automáticamente. Selecciona el mensaje de arriba y cópialo a mano.</p>
+        <p id="copy-fallback" data-i18n="copyFallback" hidden>No se pudo copiar automáticamente. Selecciona el mensaje de arriba y cópialo a mano.</p>
       </aside>
     </main>
 
     <footer class="site-footer">
-      <p>Divide la cuenta · propina al sol, al céntimo.</p>
+      <p data-i18n="footer">Divide la cuenta · propina al sol, al céntimo.</p>
     </footer>
   </div>
   <noscript>
-    <p>Activa JavaScript para dividir la cuenta.</p>
+    <p lang="es">Activa JavaScript para dividir la cuenta.</p>
+    <p lang="en">Enable JavaScript to split the bill.</p>
   </noscript>
   <script src="js/split.js"></script>
   <script src="js/app.js"></script>

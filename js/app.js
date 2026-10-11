@@ -11,14 +11,17 @@
     tipMode: 'percent',
     tipPercent: 10,
     customTipCents: 0,
-    customTipError: '',
+    customTipErrorCode: '',
     editing: null,
-    pendingDeletePersonId: null
+    pendingDeletePersonId: null,
+    lang: 'es'
   };
 
   var idCounter = 0;
   var copiedTimer = 0;
+  var copyPhase = 'idle';
   var lastBill = null;
+  var STORAGE_KEY = 'dividex-lang';
 
   var peopleEl = document.getElementById('people');
   var emptyEl = document.getElementById('empty-state');
@@ -39,6 +42,7 @@
   var customInput = document.getElementById('custom-tip');
   var customError = document.getElementById('custom-tip-error');
   var tipButtons = document.querySelectorAll('[data-tip]');
+  var langSwitch = document.getElementById('lang-switch');
 
   function nextId(prefix) {
     idCounter += 1;
@@ -65,10 +69,18 @@
     if (state.tipMode === 'custom') {
       return {
         type: 'custom',
-        cents: state.customTipError ? 0 : state.customTipCents
+        cents: state.customTipErrorCode ? 0 : state.customTipCents
       };
     }
     return { type: 'percent', percent: state.tipPercent };
+  }
+
+  function tr(key, vars) {
+    return DC.t(state.lang, key, vars);
+  }
+
+  function errorText(kind, result) {
+    return DC.messageFor(kind, result.code, state.lang);
   }
 
   function clearFormError(form) {
@@ -111,11 +123,11 @@
 
   function tipLabel() {
     if (state.tipMode === 'custom') {
-      if (state.customTipError || state.customTipCents <= 0) return 'Propina personalizada';
-      return 'Propina ' + DC.formatSoles(state.customTipCents);
+      if (state.customTipErrorCode || state.customTipCents <= 0) return tr('tipCustom');
+      return tr('tipAmount', { amount: DC.formatSoles(state.customTipCents) });
     }
-    if (state.tipPercent === 0) return 'Sin propina';
-    return 'Propina ' + state.tipPercent + '%';
+    if (state.tipPercent === 0) return tr('tipNone');
+    return tr('tipPercent', { percent: state.tipPercent });
   }
 
   function renderTipButtons() {
@@ -129,7 +141,9 @@
     }
     if (state.tipMode === 'custom') customWrap.hidden = false;
     else customWrap.hidden = true;
-    customError.textContent = state.tipMode === 'custom' ? state.customTipError : '';
+    customError.textContent = state.tipMode === 'custom' && state.customTipErrorCode
+      ? DC.messageFor('tip', state.customTipErrorCode, state.lang)
+      : '';
   }
 
   function renderPeople(drafts) {
@@ -157,18 +171,18 @@
     if (state.editing && state.editing.kind === 'person' && state.editing.personId === person.id) {
       head =
         '<form class="person-edit" data-action="save-person" data-person-id="' + person.id + '" novalidate>' +
-          '<label class="sr-only" for="edit-name-' + person.id + '">Nombre</label>' +
+          '<label class="sr-only" for="edit-name-' + person.id + '">' + escapeHtml(tr('nameLabel')) + '</label>' +
           '<input id="edit-name-' + person.id + '" name="name" maxlength="60" value="' + escapeHtml(person.name) + '">' +
-          '<button type="submit" class="btn btn-primary btn-small">Guardar</button>' +
-          '<button type="button" class="btn btn-ghost btn-small" data-action="cancel-edit">Cancelar</button>' +
+          '<button type="submit" class="btn btn-primary btn-small">' + escapeHtml(tr('save')) + '</button>' +
+          '<button type="button" class="btn btn-ghost btn-small" data-action="cancel-edit">' + escapeHtml(tr('cancel')) + '</button>' +
           '<p class="field-error" role="alert"></p>' +
         '</form>';
     } else if (state.pendingDeletePersonId === person.id) {
       head =
         '<div class="confirm-delete">' +
-          '<p>¿Eliminar a ' + escapeHtml(person.name) + ' y todo lo que pidió?</p>' +
-          '<button type="button" class="btn btn-danger btn-small" data-action="confirm-delete-person" data-person-id="' + person.id + '">Sí, eliminar</button>' +
-          '<button type="button" class="btn btn-ghost btn-small" data-action="cancel-delete">Cancelar</button>' +
+          '<p>' + escapeHtml(tr('confirmDelete', { name: person.name })) + '</p>' +
+          '<button type="button" class="btn btn-danger btn-small" data-action="confirm-delete-person" data-person-id="' + person.id + '">' + escapeHtml(tr('confirmDeleteYes')) + '</button>' +
+          '<button type="button" class="btn btn-ghost btn-small" data-action="cancel-delete">' + escapeHtml(tr('cancel')) + '</button>' +
         '</div>';
     } else {
       head =
@@ -177,14 +191,14 @@
           '<h3 class="person-name">' + escapeHtml(person.name) + '</h3>' +
         '</div>' +
         '<div class="person-actions">' +
-          '<button type="button" class="btn btn-text" data-action="edit-person" data-person-id="' + person.id + '">Editar</button>' +
-          '<button type="button" class="btn btn-text danger" data-action="delete-person" data-person-id="' + person.id + '">Eliminar</button>' +
+          '<button type="button" class="btn btn-text" data-action="edit-person" data-person-id="' + person.id + '">' + escapeHtml(tr('edit')) + '</button>' +
+          '<button type="button" class="btn btn-text danger" data-action="delete-person" data-person-id="' + person.id + '">' + escapeHtml(tr('remove')) + '</button>' +
         '</div>';
     }
 
     var items = '';
     if (person.items.length === 0) {
-      items = '<li class="item-empty">Todavía no hay pedidos.</li>';
+      items = '<li class="item-empty">' + escapeHtml(tr('noItems')) + '</li>';
     } else {
       for (var i = 0; i < person.items.length; i += 1) {
         items += itemMarkup(person, person.items[i]);
@@ -197,17 +211,17 @@
       '<article class="person" data-person-id="' + person.id + '">' +
         '<div class="person-head">' + head + '</div>' +
         '<ul class="items">' + items + '</ul>' +
-        '<p class="person-sub">Subtotal <strong data-field="subtotal" data-cents="' + subtotal + '">' + DC.formatSoles(subtotal) + '</strong></p>' +
+        '<p class="person-sub">' + escapeHtml(tr('subtotal')) + ' <strong data-field="subtotal" data-cents="' + subtotal + '">' + DC.formatSoles(subtotal) + '</strong></p>' +
         '<form class="add-item" data-action="add-item" data-person-id="' + person.id + '" novalidate>' +
           '<div class="field">' +
-            '<label for="item-' + person.id + '">Plato o bebida</label>' +
-            '<input id="item-' + person.id + '" name="dish" maxlength="80" placeholder="Lomo saltado" value="' + escapeHtml(draft.item) + '">' +
+            '<label for="item-' + person.id + '">' + escapeHtml(tr('dishLabel')) + '</label>' +
+            '<input id="item-' + person.id + '" name="dish" maxlength="80" placeholder="' + escapeHtml(tr('dishPlaceholder')) + '" value="' + escapeHtml(draft.item) + '">' +
           '</div>' +
           '<div class="field">' +
-            '<label for="price-' + person.id + '">Precio (S/)</label>' +
-            '<input id="price-' + person.id + '" name="price" inputmode="decimal" maxlength="12" placeholder="12.50" value="' + escapeHtml(draft.price) + '">' +
+            '<label for="price-' + person.id + '">' + escapeHtml(tr('priceLabel')) + '</label>' +
+            '<input id="price-' + person.id + '" name="price" inputmode="decimal" maxlength="12" placeholder="' + escapeHtml(tr('pricePlaceholder')) + '" value="' + escapeHtml(draft.price) + '">' +
           '</div>' +
-          '<button type="submit" class="btn btn-primary">Agregar</button>' +
+          '<button type="submit" class="btn btn-primary">' + escapeHtml(tr('addItem')) + '</button>' +
           '<p class="field-error" role="alert"></p>' +
         '</form>' +
       '</article>'
@@ -220,15 +234,15 @@
         '<li class="item item-editing">' +
           '<form class="edit-item" data-action="save-item" data-person-id="' + person.id + '" data-item-id="' + item.id + '" novalidate>' +
             '<div class="field">' +
-              '<label class="sr-only" for="edit-item-' + item.id + '">Plato o bebida</label>' +
+              '<label class="sr-only" for="edit-item-' + item.id + '">' + escapeHtml(tr('dishLabel')) + '</label>' +
               '<input id="edit-item-' + item.id + '" name="dish" maxlength="80" value="' + escapeHtml(item.name) + '">' +
             '</div>' +
             '<div class="field">' +
-              '<label class="sr-only" for="edit-price-' + item.id + '">Precio (S/)</label>' +
+              '<label class="sr-only" for="edit-price-' + item.id + '">' + escapeHtml(tr('priceLabel')) + '</label>' +
               '<input id="edit-price-' + item.id + '" name="price" inputmode="decimal" maxlength="12" value="' + escapeHtml(DC.centsToInput(item.priceCents)) + '">' +
             '</div>' +
-            '<button type="submit" class="btn btn-primary btn-small">Guardar</button>' +
-            '<button type="button" class="btn btn-ghost btn-small" data-action="cancel-edit">Cancelar</button>' +
+            '<button type="submit" class="btn btn-primary btn-small">' + escapeHtml(tr('save')) + '</button>' +
+            '<button type="button" class="btn btn-ghost btn-small" data-action="cancel-edit">' + escapeHtml(tr('cancel')) + '</button>' +
             '<p class="field-error" role="alert"></p>' +
           '</form>' +
         '</li>'
@@ -239,8 +253,8 @@
       '<li class="item">' +
         '<span class="item-name">' + escapeHtml(item.name) + '</span>' +
         '<span class="item-price">' + DC.formatSoles(item.priceCents) + '</span>' +
-        '<button type="button" class="btn btn-text" data-action="edit-item" data-person-id="' + person.id + '" data-item-id="' + item.id + '">Editar</button>' +
-        '<button type="button" class="btn btn-text danger" data-action="delete-item" data-person-id="' + person.id + '" data-item-id="' + item.id + '" aria-label="Eliminar ' + escapeHtml(item.name) + '">Eliminar</button>' +
+        '<button type="button" class="btn btn-text" data-action="edit-item" data-person-id="' + person.id + '" data-item-id="' + item.id + '">' + escapeHtml(tr('edit')) + '</button>' +
+        '<button type="button" class="btn btn-text danger" data-action="delete-item" data-person-id="' + person.id + '" data-item-id="' + item.id + '" aria-label="' + escapeHtml(tr('removeItem', { name: item.name })) + '">' + escapeHtml(tr('remove')) + '</button>' +
       '</li>'
     );
   }
@@ -251,7 +265,7 @@
     receiptMeta.textContent = tipLabel();
 
     if (bill.rows.length === 0) {
-      billBody.innerHTML = '<tr class="bill-empty"><td colspan="4">Agrega personas para ver el reparto.</td></tr>';
+      billBody.innerHTML = '<tr class="bill-empty"><td colspan="4">' + escapeHtml(tr('billEmpty')) + '</td></tr>';
     } else {
       var rows = '';
       for (var i = 0; i < bill.rows.length; i += 1) {
@@ -275,10 +289,10 @@
     sumTotal.dataset.totalCents = String(bill.totalCents);
 
     if (bill.rows.length === 0) {
-      waPreview.textContent = 'Agrega personas para armar el mensaje.';
+      waPreview.textContent = tr('waEmpty');
       copyBtn.disabled = true;
     } else {
-      waPreview.textContent = DC.buildWhatsAppMessage(bill);
+      waPreview.textContent = DC.buildWhatsAppMessage(bill, state.lang);
       copyBtn.disabled = false;
     }
   }
@@ -298,7 +312,7 @@
     event.preventDefault();
     var result = DC.validatePersonName(personNameInput.value);
     if (!result.ok) {
-      personError.textContent = result.message;
+      personError.textContent = errorText('person', result);
       personNameInput.setAttribute('aria-invalid', 'true');
       personNameInput.focus();
       return;
@@ -413,13 +427,13 @@
     if (!person) return;
     var nameResult = DC.validateItemName(field(form, 'dish').value);
     if (!nameResult.ok) {
-      showFormError(form, nameResult.message);
+      showFormError(form, errorText('item', nameResult));
       field(form, 'dish').focus();
       return;
     }
     var priceResult = DC.parseAmountToCents(field(form, 'price').value, { allowZero: false, kind: 'price' });
     if (!priceResult.ok) {
-      showFormError(form, priceResult.message);
+      showFormError(form, errorText('price', priceResult));
       field(form, 'price').focus();
       return;
     }
@@ -440,7 +454,7 @@
     if (!person) return;
     var result = DC.validatePersonName(field(form, 'name').value);
     if (!result.ok) {
-      showFormError(form, result.message);
+      showFormError(form, errorText('person', result));
       field(form, 'name').focus();
       return;
     }
@@ -460,13 +474,13 @@
     if (!item) return;
     var nameResult = DC.validateItemName(field(form, 'dish').value);
     if (!nameResult.ok) {
-      showFormError(form, nameResult.message);
+      showFormError(form, errorText('item', nameResult));
       field(form, 'dish').focus();
       return;
     }
     var priceResult = DC.parseAmountToCents(field(form, 'price').value, { allowZero: false, kind: 'price' });
     if (!priceResult.ok) {
-      showFormError(form, priceResult.message);
+      showFormError(form, errorText('price', priceResult));
       field(form, 'price').focus();
       return;
     }
@@ -494,34 +508,50 @@
     var raw = customInput.value;
     if (raw.trim() === '') {
       state.customTipCents = 0;
-      state.customTipError = '';
+      state.customTipErrorCode = '';
     } else {
       var parsed = DC.parseAmountToCents(raw, { allowZero: true, kind: 'tip' });
       if (!parsed.ok) {
         state.customTipCents = 0;
-        state.customTipError = parsed.message;
+        state.customTipErrorCode = parsed.code;
       } else {
         state.customTipCents = parsed.cents;
-        state.customTipError = '';
+        state.customTipErrorCode = '';
       }
     }
-    customError.textContent = state.customTipError;
+    customError.textContent = state.customTipErrorCode
+      ? DC.messageFor('tip', state.customTipErrorCode, state.lang)
+      : '';
     renderSummary();
   });
 
-  function showCopied() {
-    copyBtn.classList.add('is-copied');
-    copyBtn.textContent = '¡Copiado!';
-    copyStatus.textContent = '¡Copiado!';
-    copyFallback.hidden = true;
-    window.clearTimeout(copiedTimer);
-    copiedTimer = window.setTimeout(resetCopyButton, 2600);
+  function updateCopyChrome() {
+    if (copyPhase === 'copied') {
+      copyBtn.classList.add('is-copied');
+      copyBtn.textContent = tr('copied');
+      copyStatus.textContent = tr('copied');
+      copyFallback.hidden = true;
+      return;
+    }
+    copyBtn.classList.remove('is-copied');
+    copyBtn.textContent = tr('copyButton');
+    if (copyPhase === 'failed') {
+      copyFallback.hidden = false;
+      copyStatus.textContent = tr('copyFailedStatus');
+    } else {
+      copyFallback.hidden = true;
+      copyStatus.textContent = '';
+    }
   }
 
-  function resetCopyButton() {
-    copyBtn.classList.remove('is-copied');
-    copyBtn.textContent = 'Copiar para WhatsApp';
-    copyStatus.textContent = '';
+  function showCopied() {
+    copyPhase = 'copied';
+    updateCopyChrome();
+    window.clearTimeout(copiedTimer);
+    copiedTimer = window.setTimeout(function () {
+      copyPhase = 'idle';
+      updateCopyChrome();
+    }, 2600);
   }
 
   function fallbackCopy(text) {
@@ -561,17 +591,170 @@
 
   copyBtn.addEventListener('click', function () {
     if (!lastBill || lastBill.rows.length === 0) return;
-    var text = DC.buildWhatsAppMessage(lastBill);
+    var text = DC.buildWhatsAppMessage(lastBill, state.lang);
     copyText(text).then(function (ok) {
       if (ok) {
         showCopied();
         return;
       }
-      resetCopyButton();
-      copyFallback.hidden = false;
-      copyStatus.textContent = 'No se pudo copiar automáticamente.';
+      copyPhase = 'failed';
+      updateCopyChrome();
     });
   });
 
-  refresh();
+  function preferredLang() {
+    var stored = null;
+    try {
+      stored = localStorage.getItem(STORAGE_KEY);
+    } catch (err) {
+      stored = null;
+    }
+    if (stored === 'es' || stored === 'en') return stored;
+    var browser = '';
+    if (navigator.languages && navigator.languages.length) browser = navigator.languages[0];
+    else browser = navigator.language || '';
+    return String(browser).toLowerCase().indexOf('es') === 0 ? 'es' : 'en';
+  }
+
+  function applyStaticText() {
+    var nodes = document.querySelectorAll('[data-i18n]');
+    var i;
+    for (i = 0; i < nodes.length; i += 1) {
+      nodes[i].textContent = tr(nodes[i].getAttribute('data-i18n'));
+    }
+    var placeholders = document.querySelectorAll('[data-i18n-placeholder]');
+    for (i = 0; i < placeholders.length; i += 1) {
+      placeholders[i].setAttribute('placeholder', tr(placeholders[i].getAttribute('data-i18n-placeholder')));
+    }
+    var labels = document.querySelectorAll('[data-i18n-aria]');
+    for (i = 0; i < labels.length; i += 1) {
+      labels[i].setAttribute('aria-label', tr(labels[i].getAttribute('data-i18n-aria')));
+    }
+    var meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', tr('metaDescription'));
+    var buttons = document.querySelectorAll('#lang-switch [data-lang]');
+    for (i = 0; i < buttons.length; i += 1) {
+      var pressed = buttons[i].getAttribute('data-lang') === state.lang;
+      buttons[i].setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    }
+  }
+
+  function snapshotEditing() {
+    if (!state.editing) return null;
+    if (state.editing.kind === 'person') {
+      var nameInput = document.getElementById('edit-name-' + state.editing.personId);
+      return nameInput ? { kind: 'person', value: nameInput.value } : null;
+    }
+    if (state.editing.kind !== 'item') return null;
+    var dish = document.getElementById('edit-item-' + state.editing.itemId);
+    var price = document.getElementById('edit-price-' + state.editing.itemId);
+    return {
+      kind: 'item',
+      dish: dish ? dish.value : '',
+      price: price ? price.value : ''
+    };
+  }
+
+  function restoreEditing(editing) {
+    if (!editing || !state.editing) return;
+    if (editing.kind === 'person' && state.editing.kind === 'person') {
+      var nameInput = document.getElementById('edit-name-' + state.editing.personId);
+      if (nameInput) nameInput.value = editing.value;
+      return;
+    }
+    if (editing.kind === 'item' && state.editing.kind === 'item') {
+      var dish = document.getElementById('edit-item-' + state.editing.itemId);
+      var price = document.getElementById('edit-price-' + state.editing.itemId);
+      if (dish) dish.value = editing.dish;
+      if (price) price.value = editing.price;
+    }
+  }
+
+  function retranslatePersonError() {
+    if (!personError.textContent) return;
+    var result = DC.validatePersonName(personNameInput.value);
+    personError.textContent = result.ok ? '' : errorText('person', result);
+    if (result.ok) personNameInput.removeAttribute('aria-invalid');
+  }
+
+  function snapshotFormErrors() {
+    var marks = [];
+    var forms = peopleEl.querySelectorAll('form');
+    for (var i = 0; i < forms.length; i += 1) {
+      var form = forms[i];
+      var box = form.querySelector('.field-error');
+      if (!box || !box.textContent) continue;
+      marks.push({
+        action: form.getAttribute('data-action'),
+        personId: form.getAttribute('data-person-id'),
+        itemId: form.getAttribute('data-item-id') || ''
+      });
+    }
+    return marks;
+  }
+
+  function findMarkedForm(mark) {
+    var forms = peopleEl.querySelectorAll('form');
+    for (var i = 0; i < forms.length; i += 1) {
+      var form = forms[i];
+      if (form.getAttribute('data-action') !== mark.action) continue;
+      if (form.getAttribute('data-person-id') !== mark.personId) continue;
+      if ((form.getAttribute('data-item-id') || '') !== mark.itemId) continue;
+      return form;
+    }
+    return null;
+  }
+
+  function revalidateMarked(marks) {
+    for (var i = 0; i < marks.length; i += 1) {
+      var form = findMarkedForm(marks[i]);
+      if (!form) continue;
+      var action = marks[i].action;
+      if (action === 'save-person') {
+        var personResult = DC.validatePersonName(field(form, 'name').value);
+        if (!personResult.ok) showFormError(form, errorText('person', personResult));
+        continue;
+      }
+      if (action === 'add-item' || action === 'save-item') {
+        var nameResult = DC.validateItemName(field(form, 'dish').value);
+        if (!nameResult.ok) {
+          showFormError(form, errorText('item', nameResult));
+          continue;
+        }
+        var priceResult = DC.parseAmountToCents(field(form, 'price').value, { allowZero: false, kind: 'price' });
+        if (!priceResult.ok) showFormError(form, errorText('price', priceResult));
+      }
+    }
+  }
+
+  function applyLanguage(lang, persist) {
+    state.lang = lang === 'en' ? 'en' : 'es';
+    if (persist) {
+      try {
+        localStorage.setItem(STORAGE_KEY, state.lang);
+      } catch (err) {
+        /* private mode can block storage; the choice still applies this visit */
+      }
+    }
+    document.documentElement.lang = state.lang;
+    var drafts = snapshotDrafts();
+    var editing = snapshotEditing();
+    var marks = snapshotFormErrors();
+    applyStaticText();
+    refresh(drafts);
+    restoreEditing(editing);
+    retranslatePersonError();
+    revalidateMarked(marks);
+    updateCopyChrome();
+  }
+
+  if (langSwitch) {
+    langSwitch.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-lang]');
+      if (!button || !langSwitch.contains(button)) return;
+      applyLanguage(button.getAttribute('data-lang'), true);
+    });
+  }
+
+  applyLanguage(preferredLang(), false);
 })();

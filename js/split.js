@@ -15,26 +15,192 @@
 
   var MAX_CENTS = 999999999;
 
-  function priceMessage(code) {
-    if (code === 'empty') return 'Escribe un precio.';
-    if (code === 'zero') return 'El precio debe ser mayor que cero.';
-    if (code === 'negative') return 'El precio no puede ser negativo.';
-    if (code === 'too-large') return 'Ese monto es demasiado grande.';
-    return 'Ese precio no es válido. Ejemplo: 12.50.';
+  var STRINGS = {
+    es: {
+      metaDescription: 'Dividex. Divide la cuenta de la mesa en soles: platos, propina proporcional y un mensaje listo para WhatsApp.',
+      langGroup: 'Idioma',
+      eyebrow: 'Divide la cuenta',
+      lede: 'Anota lo que pidió cada persona, elige la propina y copia el resumen para WhatsApp.',
+      peopleHeading: 'Personas',
+      nameLabel: 'Nombre',
+      namePlaceholder: 'Ana',
+      addPerson: 'Agregar persona',
+      emptyTitle: 'La mesa está vacía',
+      emptyBody: 'Agrega a cada persona y anota sus platos o bebidas. La cuenta se actualiza al instante.',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      confirmDelete: '¿Eliminar a {name} y todo lo que pidió?',
+      confirmDeleteYes: 'Sí, eliminar',
+      edit: 'Editar',
+      remove: 'Eliminar',
+      removeItem: 'Eliminar {name}',
+      noItems: 'Todavía no hay pedidos.',
+      subtotal: 'Subtotal',
+      dishLabel: 'Plato o bebida',
+      dishPlaceholder: 'Lomo saltado',
+      priceLabel: 'Precio (S/)',
+      pricePlaceholder: '12.50',
+      addItem: 'Agregar',
+      receiptKicker: 'Cuenta',
+      billHeading: 'La cuenta',
+      tipHelp: 'La propina se reparte según lo que consumió cada persona.',
+      tipGroup: 'Propina',
+      tipCustomButton: 'Otro',
+      customTipLabel: 'Monto de la propina (S/)',
+      customTipPlaceholder: '10.00',
+      grandLabel: 'Total de la mesa',
+      tableCaption: 'Reparto de la cuenta por persona',
+      colPerson: 'Persona',
+      colSubtotal: 'Subtotal',
+      colTip: 'Propina',
+      colTotal: 'Total',
+      footTotal: 'Total',
+      billEmpty: 'Agrega personas para ver el reparto.',
+      adjustNote: 'Los céntimos se ajustan para que la suma de las personas cuadre exacto con el total.',
+      waLabel: 'Mensaje para WhatsApp',
+      waEmpty: 'Agrega personas para armar el mensaje.',
+      copyButton: 'Copiar para WhatsApp',
+      copied: '¡Copiado!',
+      copyFallback: 'No se pudo copiar automáticamente. Selecciona el mensaje de arriba y cópialo a mano.',
+      copyFailedStatus: 'No se pudo copiar automáticamente.',
+      footer: 'Divide la cuenta · propina al sol, al céntimo.',
+      noscript: 'Activa JavaScript para dividir la cuenta.',
+      tipCustom: 'Propina personalizada',
+      tipNone: 'Sin propina',
+      tipPercent: 'Propina {percent}%',
+      tipAmount: 'Propina {amount}',
+      waTitle: 'Cuenta de la mesa 🍽️',
+      waTotal: 'Total:',
+      unnamed: 'Sin nombre',
+      errPriceEmpty: 'Escribe un precio.',
+      errPriceZero: 'El precio debe ser mayor que cero.',
+      errPriceNegative: 'El precio no puede ser negativo.',
+      errAmountTooLarge: 'Ese monto es demasiado grande.',
+      errPriceInvalid: 'Ese precio no es válido. Ejemplo: 12.50.',
+      errTipEmpty: 'Escribe el monto de la propina.',
+      errTipNegative: 'La propina no puede ser negativa.',
+      errTipInvalid: 'Ese monto no es válido. Ejemplo: 5.00.',
+      errPersonEmpty: 'Escribe un nombre.',
+      errNameTooLong: 'El nombre es demasiado largo.',
+      errItemEmpty: 'Escribe el plato o la bebida.'
+    },
+    en: {
+      metaDescription: 'Dividex. Split a table bill in soles: dishes, a proportional tip, and a message ready for WhatsApp.',
+      langGroup: 'Language',
+      eyebrow: 'Split the bill',
+      lede: 'Write down what each person ordered, choose the tip, and copy a summary for WhatsApp.',
+      peopleHeading: 'People',
+      nameLabel: 'Name',
+      namePlaceholder: 'Ana',
+      addPerson: 'Add person',
+      emptyTitle: 'The table is empty',
+      emptyBody: 'Add each person and note their dishes or drinks. The bill updates instantly.',
+      save: 'Save',
+      cancel: 'Cancel',
+      confirmDelete: 'Remove {name} and everything they ordered?',
+      confirmDeleteYes: 'Yes, remove',
+      edit: 'Edit',
+      remove: 'Remove',
+      removeItem: 'Remove {name}',
+      noItems: 'No orders yet.',
+      subtotal: 'Subtotal',
+      dishLabel: 'Dish or drink',
+      dishPlaceholder: 'Grilled chicken',
+      priceLabel: 'Price (S/)',
+      pricePlaceholder: '12.50',
+      addItem: 'Add',
+      receiptKicker: 'Bill',
+      billHeading: 'The bill',
+      tipHelp: 'The tip is split according to what each person consumed.',
+      tipGroup: 'Tip',
+      tipCustomButton: 'Custom',
+      customTipLabel: 'Tip amount (S/)',
+      customTipPlaceholder: '10.00',
+      grandLabel: 'Table total',
+      tableCaption: 'Bill split per person',
+      colPerson: 'Person',
+      colSubtotal: 'Subtotal',
+      colTip: 'Tip',
+      colTotal: 'Total',
+      footTotal: 'Total',
+      billEmpty: 'Add people to see the split.',
+      adjustNote: 'Cents are adjusted so the per-person amounts add up exactly to the total.',
+      waLabel: 'WhatsApp message',
+      waEmpty: 'Add people to build the message.',
+      copyButton: 'Copy for WhatsApp',
+      copied: 'Copied!',
+      copyFallback: 'Could not copy automatically. Select the message above and copy it by hand.',
+      copyFailedStatus: 'Could not copy automatically.',
+      footer: 'Split the bill · down to the cent.',
+      noscript: 'Enable JavaScript to split the bill.',
+      tipCustom: 'Custom tip',
+      tipNone: 'No tip',
+      tipPercent: 'Tip {percent}%',
+      tipAmount: 'Tip {amount}',
+      waTitle: 'Table bill 🍽️',
+      waTotal: 'Total:',
+      unnamed: 'No name',
+      errPriceEmpty: 'Enter a price.',
+      errPriceZero: 'The price must be greater than zero.',
+      errPriceNegative: 'The price cannot be negative.',
+      errAmountTooLarge: 'That amount is too large.',
+      errPriceInvalid: 'That price is not valid. Example: 12.50.',
+      errTipEmpty: 'Enter the tip amount.',
+      errTipNegative: 'The tip cannot be negative.',
+      errTipInvalid: 'That amount is not valid. Example: 5.00.',
+      errPersonEmpty: 'Enter a name.',
+      errNameTooLong: 'The name is too long.',
+      errItemEmpty: 'Enter the dish or drink.'
+    }
+  };
+
+  var MESSAGE_KEYS = {
+    'price:empty': 'errPriceEmpty',
+    'price:zero': 'errPriceZero',
+    'price:negative': 'errPriceNegative',
+    'price:too-large': 'errAmountTooLarge',
+    'price:invalid': 'errPriceInvalid',
+    'tip:empty': 'errTipEmpty',
+    'tip:negative': 'errTipNegative',
+    'tip:too-large': 'errAmountTooLarge',
+    'tip:invalid': 'errTipInvalid',
+    'person:empty': 'errPersonEmpty',
+    'person:too-long': 'errNameTooLong',
+    'item:empty': 'errItemEmpty',
+    'item:too-long': 'errNameTooLong'
+  };
+
+  function normalizeLang(lang) {
+    return lang === 'en' ? 'en' : 'es';
   }
 
-  function tipMessage(code) {
-    if (code === 'empty') return 'Escribe el monto de la propina.';
-    if (code === 'negative') return 'La propina no puede ser negativa.';
-    if (code === 'too-large') return 'Ese monto es demasiado grande.';
-    return 'Ese monto no es válido. Ejemplo: 5.00.';
+  function t(lang, key, vars) {
+    var language = normalizeLang(lang);
+    var text = STRINGS[language][key];
+    if (text == null) text = STRINGS.es[key];
+    if (text == null) return key;
+    if (!vars) return text;
+    return String(text).replace(/\{(\w+)\}/g, function (_match, name) {
+      return vars[name] == null ? '' : String(vars[name]);
+    });
+  }
+
+  function messageFor(kind, code, lang) {
+    var key = MESSAGE_KEYS[kind + ':' + code];
+    if (!key) {
+      if (kind === 'tip') key = 'errTipInvalid';
+      else if (kind === 'item') key = 'errItemEmpty';
+      else if (kind === 'person') key = 'errPersonEmpty';
+      else key = 'errPriceInvalid';
+    }
+    return t(lang, key);
   }
 
   function fail(code, kind) {
     return {
       ok: false,
       code: code,
-      message: kind === 'tip' ? tipMessage(code) : priceMessage(code)
+      message: messageFor(kind === 'tip' ? 'tip' : 'price', code, 'es')
     };
   }
 
@@ -89,15 +255,15 @@
 
   function validatePersonName(raw) {
     var name = cleanName(raw);
-    if (!name) return { ok: false, message: 'Escribe un nombre.' };
-    if (name.length > 60) return { ok: false, message: 'El nombre es demasiado largo.' };
+    if (!name) return { ok: false, code: 'empty', message: messageFor('person', 'empty', 'es') };
+    if (name.length > 60) return { ok: false, code: 'too-long', message: messageFor('person', 'too-long', 'es') };
     return { ok: true, name: name };
   }
 
   function validateItemName(raw) {
     var name = cleanName(raw);
-    if (!name) return { ok: false, message: 'Escribe el plato o la bebida.' };
-    if (name.length > 80) return { ok: false, message: 'El nombre es demasiado largo.' };
+    if (!name) return { ok: false, code: 'empty', message: messageFor('item', 'empty', 'es') };
+    if (name.length > 80) return { ok: false, code: 'too-long', message: messageFor('item', 'too-long', 'es') };
     return { ok: true, name: name };
   }
 
@@ -227,18 +393,22 @@
     return (value < 0 ? '-' : '') + whole + '.' + fracText;
   }
 
-  function buildWhatsAppMessage(bill) {
-    var lines = ['Cuenta de la mesa 🍽️'];
+  function buildWhatsAppMessage(bill, lang) {
+    var language = normalizeLang(lang);
+    var lines = [t(language, 'waTitle')];
     var rows = (bill && bill.rows) || [];
     for (var i = 0; i < rows.length; i += 1) {
-      var name = cleanName(rows[i].name) || 'Sin nombre';
+      var name = cleanName(rows[i].name) || t(language, 'unnamed');
       lines.push(name + ': ' + formatSoles(rows[i].totalCents));
     }
-    lines.push('Total: ' + formatSoles(bill ? bill.totalCents : 0));
+    lines.push(t(language, 'waTotal') + ' ' + formatSoles(bill ? bill.totalCents : 0));
     return lines.join('\n');
   }
 
   return {
+    STRINGS: STRINGS,
+    t: t,
+    messageFor: messageFor,
     parseAmountToCents: parseAmountToCents,
     validatePersonName: validatePersonName,
     validateItemName: validateItemName,
